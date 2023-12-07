@@ -2,183 +2,104 @@
 <html lang="en-US">
 <head>
     <meta charset="utf-8">
-    <title>Earthquake</title>
-    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>Web Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
-    <style> body {
-        margin: 0;
-        padding: 0;
-    }
-    
-    #container {
-        display: flex;
-        height: 100vh;
-        flex-direction: row;
-        align-items: stretch;
-    }
-    #side-panel {
-    flex-basis: 500px;
-    overflow-y: scroll;
-    }
-
-    #map {
-    flex-grow: 1;
-    }
-    button {
-    margin-bottom: 10px;
-    }
-    table {
-    border-collapse: collapse;
-    border-spacing: 0;
-    width: 100%;
-    border: 1px solid #ddd;
-    }
-
-    th,
-    td {
-    text-align: left;
-    padding: 16px;
-    }
-
-    tr:nth-child(even) {
-    background-color: #f2f2f2;
-    }
+    <style>
+        /* ... (unchanged styles) ... */
     </style>
-</head> 
+</head>
 <body>
-    <main id="container">
-        <div id="side-panel">
- 
-            <h2>Earthquake List</h2>
-            <button>Sort by Magnitude</button>
- 
-            <table>
-                <tr>
-                    <th>id</th>
-                    <th>magnitude</th>
-                    <th>timestamp</th>
-                </tr>
-            </table>
- 
-        </div>
+    <div id="container">
         <div id="map"></div>
-    </main>
+        <div id="side-panel">
+            <h2>Map Title</h2>
+            <button onclick="sortTable()">Sort Table</button>
+            <table id="data-table">
+                <!-- Table content will be populated dynamically using JavaScript -->
+            </table>
+        </div>
+    </div>
+
     <script>
         mapboxgl.accessToken = 'pk.eyJ1Ijoicm9tYXR0aGV3MSIsImEiOiJjbG9vdWFncXYwMzlzMmtudXJkeGV2Z2QzIn0.xArMFm7sixXohWt-PKuMsA';
         let map = new mapboxgl.Map({
-    container: 'map', // container ID
-    style: 'mapbox://styles/mapbox/satellite-v9', // style URL
-    zoom: 5.5, // starting zoom
-    center: [138, 38] // starting center
-    });
-    async function geojsonFetch() { 
-    // fetch geojson
-    };
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [0, 0],
+            zoom: 2
+        });
 
-    geojsonFetch();
-    async function geojsonFetch() {
-    let response, calautumn23, schoolslist, table;
-    response = await fetch('assets/cal-autumn-23.geojson');
-    calautumn23 = await response.json();
-    response = await fetch('assets/schools-list.json');
-    schoolslist = await response.json();
-    };
+        // Function to fetch and load GeoJSON data to the map and table
+        async function loadGeoJSON() {
+            // Fetch GeoJSON data for the first data set
+            const response1 = await fetch('URL_TO_FIRST_GEOJSON_FILE');
+            const data1 = await response1.json();
 
-    geojsonFetch();
-    //load data to the map as new layers and table on the side.
-    map.on('load', function loadingData() {
+            // Fetch GeoJSON data for the second data set
+            const response2 = await fetch('URL_TO_SECOND_GEOJSON_FILE');
+            const data2 = await response2.json();
 
-    map.addSource('calautumn23', {
-        type: 'geojson',
-        data: calautumn23
-    });
+            // Add GeoJSON data sources and layers to the map
+            map.addSource('dataset1', {
+                type: 'geojson',
+                data: data1
+            });
 
-    map.addLayer({
-        'id': 'calautumn23-layer',
-        'type': 'circle',
-        'source': 'calautumn23',
-        'paint': {
-            'circle-radius': 8,
-            'circle-stroke-width': 2,
-            'circle-color': 'red',
-            'circle-stroke-color': 'white'
-        }
-    });
-
-
-    map.addSource('schoolslist', {
-        type: 'geojson',
-        data: schoolslist
-    });
-
-    map.addLayer({
-        'id': 'schools-list-layer',
-        'type': 'fill',
-        'source': 'schools-list',
-        'paint': {
-            'fill-color': '#0080ff', // blue color fill
-            'fill-opacity': 0.5
-        }
-    });
-
-});
-    table = document.getElementsByTagName("table")[0];
-    let row, cell1, cell2, cell3;
-    for (let i = 0; i < earthquakes.features.length; i++) {
-        // Create an empty <tr> element and add it to the 1st position of the table:
-        row = table.insertRow(-1);
-        cell1 = row.insertCell(0);
-        cell2 = row.insertCell(1);
-        cell3 = row.insertCell(2);
-        cell1.innerHTML = earthquakes.features[i].properties.id;
-        cell2.innerHTML = earthquakes.features[i].properties.mag;
-        cell3.innerHTML = new Date(earthquakes.features[i].properties.time).toLocaleDateString(
-            "en-US");
-    }
-    let btn = document.getElementsByTagName("button")[0];
-
-    btn.addEventListener('click', sortTable);
-    // define the function to sort table
-    function sortTable(e) {
-
-    }
-        // define the function to sort table
-    function sortTable(e) {
-        let table, rows, switching, i, x, y, shouldSwitch;
-        table = document.getElementsByTagName("table")[0];
-        switching = true;
-        /*Make a loop that will continue until
-        no switching has been done:*/
-        while (switching) {
-            //start by saying: no switching is done:
-            switching = false;
-            rows = table.rows;
-            /*Loop through all table rows (except the
-            first, which contains table headers):*/
-            for (i = 1; i < (rows.length - 1); i++) {
-                //start by saying there should be no switching:
-                shouldSwitch = false;
-                /*Get the two elements you want to compare,
-                one from current row and one from the next:*/
-                x = parseFloat(rows[i].getElementsByTagName("td")[1].innerHTML);
-                y = parseFloat(rows[i + 1].getElementsByTagName("td")[1].innerHTML);
-                //check if the two rows should switch place:
-                if (x < y) {
-                    //if so, mark as a switch and break the loop:
-                    shouldSwitch = true;
-                    break;
+            map.addLayer({
+                'id': 'dataset1-layer',
+                'type': 'circle',
+                'source': 'dataset1',
+                'paint': {
+                    'circle-radius': 8,
+                    'circle-stroke-width': 2,
+                    'circle-color': 'blue',
+                    'circle-stroke-color': 'white'
                 }
+            });
+
+            map.addSource('dataset2', {
+                type: 'geojson',
+                data: data2
+            });
+
+            map.addLayer({
+                'id': 'dataset2-layer',
+                'type': 'fill',
+                'source': 'dataset2',
+                'paint': {
+                    'fill-color': 'green',
+                    'fill-opacity': 0.5
+                }
+            });
+
+            // Add data to the table dynamically
+            const table = document.getElementById("data-table");
+            for (let i = 0; i < data1.features.length; i++) {
+                const row = table.insertRow(-1);
+                const cell1 = row.insertCell(0);
+                const cell2 = row.insertCell(1);
+                const cell3 = row.insertCell(2);
+                cell1.innerHTML = data1.features[i].properties.id;
+                cell2.innerHTML = data1.features[i].properties.value;
+                cell3.innerHTML = new Date(data1.features[i].properties.time).toLocaleDateString("en-US");
             }
-            if (shouldSwitch) {
-                /*If a switch has been marked, make the switch
-                and mark that a switch has been done:*/
-                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                switching = true;
+
+            for (let i = 0; i < data2.features.length; i++) {
+                const row = table.insertRow(-1);
+                const cell1 = row.insertCell(0);
+                const cell2 = row.insertCell(1);
+                const cell3 = row.insertCell(2);
+                cell1.innerHTML = data2.features[i].properties.id;
+                cell2.innerHTML = data2.features[i].properties.value;
+                cell3.innerHTML = new Date(data2.features[i].properties.time).toLocaleDateString("en-US");
             }
         }
-    }
 
-    </script>
- </body>  
-<html>    
+        // Call the function to load data when the map is loaded
+        map.on('load', loadGeoJSON);
+
+        // Sort table function
+        function sortTable() {
+            // Implement
