@@ -7,50 +7,96 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
     <style>
-        /* ... (unchanged styles) ... */
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #container {
+            display: flex;
+            height: 100vh;
+            align-items: stretch;
+        }
+
+        #map {
+            flex-grow: 1;
+        }
+
+        #side-panel {
+            flex-basis: 500px;
+            overflow-y: scroll;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+            padding: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        button {
+            margin-bottom: 10px;
+        }
+
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+            width: 100%;
+            border: 1px solid #ddd;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 16px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
     <div id="container">
         <div id="map"></div>
         <div id="side-panel">
-            <h2>Map Title</h2>
+            <h2>Diamond Bar Schools</h2>
             <button onclick="sortTable()">Sort Table</button>
             <table id="data-table">
-                <!-- Table content will be populated dynamically using JavaScript -->
             </table>
         </div>
     </div>
 
     <script>
-        mapboxgl.accessToken = 'pk.eyJ1Ijoicm9tYXR0aGV3MSIsImEiOiJjbG9vdWFncXYwMzlzMmtudXJkeGV2Z2QzIn0.xArMFm7sixXohWt-PKuMsA';
+        mapboxgl.accessToken = 'pk.eyJ1Ijoicm9tYXR0aGV3MSIsImEiOiJjbHB1cjN5MncwbnJzMmxvYmYxaDhib3F4In0.fji0PvE7JtGxLIBrXgDYMw';
         let map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v11',
-            center: [0, 0],
-            zoom: 2
+            center: [-117.810336, 34.028623], 
+            zoom: 12 
         });
 
         // Function to fetch and load GeoJSON data to the map and table
         async function loadGeoJSON() {
-            // Fetch GeoJSON data for the first data set
-            const response1 = await fetch('URL_TO_FIRST_GEOJSON_FILE');
+            // Fetch GeoJSON data for the first data set (schools)
+            const response1 = await fetch('assets/dbschools.geojson');
             const data1 = await response1.json();
 
-            // Fetch GeoJSON data for the second data set
-            const response2 = await fetch('URL_TO_SECOND_GEOJSON_FILE');
+            // Fetch GeoJSON data for the second data set (home)
+            const response2 = await fetch('assets/dbhome.geojson');
             const data2 = await response2.json();
 
             // Add GeoJSON data sources and layers to the map
-            map.addSource('dataset1', {
+            map.addSource('dbschools', {
                 type: 'geojson',
                 data: data1
             });
 
             map.addLayer({
-                'id': 'dataset1-layer',
+                'id': 'dbschools-layer',
                 'type': 'circle',
-                'source': 'dataset1',
+                'source': 'dbschools',
                 'paint': {
                     'circle-radius': 8,
                     'circle-stroke-width': 2,
@@ -59,15 +105,15 @@
                 }
             });
 
-            map.addSource('dataset2', {
+            map.addSource('dbhome', {
                 type: 'geojson',
                 data: data2
             });
 
             map.addLayer({
-                'id': 'dataset2-layer',
+                'id': 'dbhome-layer',
                 'type': 'fill',
-                'source': 'dataset2',
+                'source': 'dbhome',
                 'paint': {
                     'fill-color': 'green',
                     'fill-opacity': 0.5
@@ -81,7 +127,7 @@
                 const cell1 = row.insertCell(0);
                 const cell2 = row.insertCell(1);
                 const cell3 = row.insertCell(2);
-                cell1.innerHTML = data1.features[i].properties.id;
+                cell1.innerHTML = getSchoolName(data1.features[i].properties.school_id);
                 cell2.innerHTML = data1.features[i].properties.value;
                 cell3.innerHTML = new Date(data1.features[i].properties.time).toLocaleDateString("en-US");
             }
@@ -91,15 +137,52 @@
                 const cell1 = row.insertCell(0);
                 const cell2 = row.insertCell(1);
                 const cell3 = row.insertCell(2);
-                cell1.innerHTML = data2.features[i].properties.id;
+                cell1.innerHTML = getHomeName(data2.features[i].properties.home_id);
                 cell2.innerHTML = data2.features[i].properties.value;
                 cell3.innerHTML = new Date(data2.features[i].properties.time).toLocaleDateString("en-US");
             }
         }
 
-        // Call the function to load data when the map is loaded
+        function getSchoolName(schoolId) {
+            // Map school IDs to names
+            const schoolNames = {
+                "DBHS": "Diamond Bar High School",
+                "CMS": "Chaparral Middle School",
+                "QS": "Quail Summit Elementary"
+            };
+            return schoolNames[schoolId] || schoolId;
+        }
+
+        function getHomeName(homeId) {
+            // Map home ID to name
+            const homeNames = {
+                "Home": "Your Home"
+            };
+            return homeNames[homeId] || homeId;
+        }
+
         map.on('load', loadGeoJSON);
 
         // Sort table function
         function sortTable() {
-            // Implement
+            const table = document.getElementById("data-table");
+            const rows = Array.from(table.rows);
+            
+            rows.sort((a, b) => {
+                const cellA = a.cells[0].innerHTML.toLowerCase();
+                const cellB = b.cells[0].innerHTML.toLowerCase();
+                if (cellA < cellB) {
+                    return -1;
+                }
+                if (cellA > cellB) {
+                    return 1;
+                }
+                return 0;
+            });
+
+            rows.forEach(row => table.appendChild(row));
+        }
+    </script>
+</body>
+</html>
+
